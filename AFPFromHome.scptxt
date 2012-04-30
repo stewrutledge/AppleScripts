@@ -1,0 +1,40 @@
+(* Conncet to VPN and AFP shares
+*)
+tell application "Finder"
+	activate
+	display dialog "Klick ok to connect"
+end tell
+tell application "System Events"
+	tell current location of network preferences
+		if not (exists service "EXAMPLE") then (* Checks if VPN exists, if it doesn't, the user is presented with two options, cancel and a going to the guide *)
+			display alert "Could not find VPN named EXAMPLE." buttons {"Remove message", "Open Guide"} default button {"Open Guide"}
+			set clicked to button returned of the result
+			if clicked is "Open Guide" then open location "http://kb.example.com" (* Opens website containing guide to create VPN *)
+			tell me to quit
+		end if
+		(* Change EXAMPLE to the name of the VPN you wish to use. This must be specific *)
+		set VPN to service "EXAMPLE"
+		if exists VPN then
+			if current configuration of VPN is not connected then connect VPN
+			set done to false
+			set counter to 0
+			repeat until done is true
+				set counter to counter + 1
+				if (current configuration of VPN is not connected) then
+					delay 1
+				else
+					tell application "Finder" to open location "afp://xxx.xxx.xxx.xxx/sharename" (* Change to IP you wish to connect to, as well as share name. Would work for SMB shares as well *)
+					set done to true
+				end if
+				if counter is 10 then
+					set done to true
+					disconnect VPN
+					display dialog "Could not connect after 10 seconds" buttons {"Ta bort meddelande"} (* Chose to set my own timeout *)
+				end if
+			end repeat
+		end if
+	end tell
+end tell
+
+
+
